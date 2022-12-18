@@ -33,6 +33,7 @@ from .serialdriver import SerialDriver
 from .tcpdriver import TcpDriver
 from .udpdriver import UdpDriver
 from .usbdriver import UsbDriver
+from .simdriver import SimDriver
 
 __author__ = 'Bitcraze AB'
 __all__ = []
@@ -43,13 +44,15 @@ logger = logging.getLogger(__name__)
 CLASSES = []
 
 
-def init_drivers(enable_debug_driver=False, enable_serial_driver=False):
+def init_drivers(enable_debug_driver=False, enable_serial_driver=False, enable_sim_driver=False):
     """Initialize all the drivers."""
 
     env = os.getenv('USE_CFLINK')
     if env is not None and env == 'cpp':
         from .cflinkcppdriver import CfLinkCppDriver
         CLASSES.append(CfLinkCppDriver)
+    elif enable_sim_driver:
+        CLASSES.append(SimDriver)
     else:
         CLASSES.extend([RadioDriver, UsbDriver])
 
