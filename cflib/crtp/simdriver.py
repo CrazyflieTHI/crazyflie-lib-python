@@ -96,7 +96,7 @@ class SimDriver(CRTPDriver):
         # Inter-process communication
         rxIpcQueueName = "/rxsimcrtpmq" + uri[-2:]
         txIpcQueueName = "/txsimcrtpmq" + uri[-2:]
-        print(f"rxIpcQueueName {rxIpcQueueName} txIpcQueueName {txIpcQueueName}")
+        # print(f"rxIpcQueueName {rxIpcQueueName} txIpcQueueName {txIpcQueueName}")
         self.crtpCom = SimulationIpcPosix(rxIpcQueueName, txIpcQueueName)
         self.crtpCom.incomingCrtpPacket.add_callback(self._receive_packet_posix_mq)
 
@@ -147,7 +147,6 @@ class SimDriver(CRTPDriver):
     def close(self):
         """Close the link"""
         self.crtpCom.endCommunication()
-        print("sim-cflib: Simdriver communication terminated.\n")
 
 
 class InterProcessPacket:
