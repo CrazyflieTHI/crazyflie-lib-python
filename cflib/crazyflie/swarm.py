@@ -270,8 +270,7 @@ class Swarm:
             reporter = args[1]
             func(*args[2:])
         except Exception as e:
-            if reporter:
-                reporter.report_error(e)
+            raise
 
     def _process_args_dict(self, scf, uri, args_dict):
         args = [scf]
