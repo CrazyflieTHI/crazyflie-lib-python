@@ -47,6 +47,9 @@ class Caller():
         """ Un-register cb from the callbacks """
         self.callbacks.remove(cb)
 
+    def remove_callbacks_all(self):
+        self.callbacks.clear()
+
     def call(self, *args):
         """ Call the callbacks registered with the arguments args """
         copy_of_callbacks = list(self.callbacks)
