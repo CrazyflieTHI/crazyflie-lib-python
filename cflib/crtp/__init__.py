@@ -44,10 +44,13 @@ logger = logging.getLogger(__name__)
 CLASSES = []
 
 
-def init_drivers(enable_debug_driver=False, enable_serial_driver=False, enable_sim_driver=False):
+def init_drivers(enable_debug_driver=False, enable_serial_driver=False, enable_cpp_driver=False, enable_sim_driver=False):
     """Initialize all the drivers."""
 
     env = os.getenv('USE_CFLINK')
+    if enable_cpp_driver:
+        env = "cpp"
+
     if env is not None and env == 'cpp':
         from .cflinkcppdriver import CfLinkCppDriver
         CLASSES.append(CfLinkCppDriver)
