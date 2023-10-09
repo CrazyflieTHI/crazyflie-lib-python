@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -29,15 +29,22 @@ import struct
 
 from cflib.crtp.crtpstack import CRTPPacket
 from cflib.crtp.crtpstack import CRTPPort
+from cflib.utils.encoding import compress_quaternion
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Commander']
+
+SET_SETPOINT_CHANNEL = 0
+META_COMMAND_CHANNEL = 1
 
 TYPE_STOP = 0
 TYPE_VELOCITY_WORLD = 1
 TYPE_ZDISTANCE = 2
 TYPE_HOVER = 5
+TYPE_FULL_STATE = 6
 TYPE_POSITION = 7
+
+TYPE_META_COMMAND_NOTIFY_SETPOINT_STOP = 0
 
 
 class Commander():
@@ -82,6 +89,18 @@ class Commander():
         pk.data = struct.pack('<fffH', roll, -pitch, yawrate, thrust)
         self._cf.send_packet(pk)
 
+    def send_notify_setpoint_stop(self, remain_valid_milliseconds=0):
+        """
+        Sends a packet so that the priority of the current setpoint to the lowest non-disabled value,
+        so any new setpoint regardless of source will overwrite it.
+        """
+        pk = CRTPPacket()
+        pk.port = CRTPPort.COMMANDER_GENERIC
+        pk.channel = META_COMMAND_CHANNEL
+        pk.data = struct.pack('<BI', TYPE_META_COMMAND_NOTIFY_SETPOINT_STOP,
+                              remain_valid_milliseconds)
+        self._cf.send_packet(pk)
+
     def send_stop_setpoint(self):
         """
         Send STOP setpoing, stopping the motors and (potentially) falling.
@@ -100,6 +119,7 @@ class Commander():
         """
         pk = CRTPPacket()
         pk.port = CRTPPort.COMMANDER_GENERIC
+        pk.channel = SET_SETPOINT_CHANNEL
         pk.data = struct.pack('<Bffff', TYPE_VELOCITY_WORLD,
                               vx, vy, vz, yawrate)
         self._cf.send_packet(pk)
@@ -116,6 +136,7 @@ class Commander():
         """
         pk = CRTPPacket()
         pk.port = CRTPPort.COMMANDER_GENERIC
+        pk.channel = SET_SETPOINT_CHANNEL
         pk.data = struct.pack('<Bffff', TYPE_ZDISTANCE,
                               roll, pitch, yawrate, zdistance)
         self._cf.send_packet(pk)
@@ -132,8 +153,39 @@ class Commander():
         """
         pk = CRTPPacket()
         pk.port = CRTPPort.COMMANDER_GENERIC
+        pk.channel = SET_SETPOINT_CHANNEL
         pk.data = struct.pack('<Bffff', TYPE_HOVER,
                               vx, vy, yawrate, zdistance)
+        self._cf.send_packet(pk)
+
+    def send_full_state_setpoint(self, pos, vel, acc, orientation, rollrate, pitchrate, yawrate):
+        """
+        Control mode where the position, velocity, acceleration, orientation and angular
+        velocity are sent as absolute (world) values.
+
+        position [x, y, z] are in m
+        velocity [vx, vy, vz] are in m/s
+        acceleration [ax, ay, az] are in m/s^2
+        orientation [qx, qy, qz, qw] are the quaternion components of the orientation
+        rollrate, pitchrate, yawrate are in degrees/s
+        """
+        def vector_to_mm_16bit(vec):
+            return int(vec[0] * 1000), int(vec[1] * 1000), int(vec[2] * 1000)
+
+        x, y, z = vector_to_mm_16bit(pos)
+        vx, vy, vz = vector_to_mm_16bit(vel)
+        ax, ay, az = vector_to_mm_16bit(acc)
+        rr, pr, yr = vector_to_mm_16bit([rollrate, pitchrate, yawrate])
+        orient_comp = compress_quaternion(orientation)
+
+        pk = CRTPPacket()
+        pk.port = CRTPPort.COMMANDER_GENERIC
+        pk.data = struct.pack('<BhhhhhhhhhIhhh', TYPE_FULL_STATE,
+                              x, y, z,
+                              vx, vy, vz,
+                              ax, ay, az,
+                              orient_comp,
+                              rr, pr, yr)
         self._cf.send_packet(pk)
 
     def send_position_setpoint(self, x, y, z, yaw):
@@ -146,6 +198,7 @@ class Commander():
         """
         pk = CRTPPacket()
         pk.port = CRTPPort.COMMANDER_GENERIC
+        pk.channel = SET_SETPOINT_CHANNEL
         pk.data = struct.pack('<Bffff', TYPE_POSITION,
                               x, y, z, yaw)
         self._cf.send_packet(pk)

@@ -6,9 +6,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2016 Bitcraze AB
-#
-#  Crazyflie Nano Quadcopter Client
+#  Copyright (C) 2023 Bitcraze AB
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -22,15 +20,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-Simple example that connects to one crazyflie (check the address at the top
-and update it to your crazyflie address) and send a sequence of setpoints,
-one every 5 seconds.
-
-This example is intended to work with the Loco Positioning System in TWR TOA
-mode. It aims at documenting how to set the Crazyflie in position control mode
-and how to send setpoints.
+Shows how to send full state control setpoints to the Crazyflie
 """
 import time
+
+from scipy.spatial.transform import Rotation
 
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
@@ -39,21 +33,23 @@ from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from cflib.crazyflie.syncLogger import SyncLogger
 from cflib.utils import uri_helper
 
-# URI to the Crazyflie to connect to
-uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 
-# Change the sequence according to your setup
-#             x    y    z  YAW
-sequence = [
-    (0.0, 0.0, 0.4, 0),
-    (0.0, 0.0, 1.2, 0),
-    (0.5, -0.5, 1.2, 0),
-    (0.5, 0.5, 1.2, 0),
-    (-0.5, 0.5, 1.2, 0),
-    (-0.5, -0.5, 1.2, 0),
-    (0.0, 0.0, 1.2, 0),
-    (0.0, 0.0, 0.4, 0),
-]
+# URI to the Crazyflie to connect to
+uri = uri_helper.uri_from_env(default='radio://0/65/2M/E7E7E7E7F2')
+
+
+def quaternion_from_euler(roll: float, pitch: float, yaw: float):
+    """Convert Euler angles to quaternion
+
+    Args:
+        roll (float): roll, in radians
+        pitch (float): pitch, in radians
+        yaw (float): yaw, in radians
+
+    Returns:
+        array: the quaternion [x, y, z, w]
+    """
+    return Rotation.from_euler(seq='xyz', angles=(roll, pitch, yaw), degrees=False).as_quat()
 
 
 def wait_for_position_estimator(scf):
@@ -124,17 +120,41 @@ def start_position_printing(scf):
     log_conf.start()
 
 
-def run_sequence(scf, sequence):
+def send_setpoint(cf, duration, pos, vel, acc, orientation, rollrate, pitchrate, yawrate):
+    # Set points must be sent continuously to the Crazyflie, if not it will think that connection is lost
+    end_time = time.time() + duration
+    while time.time() < end_time:
+        cf.commander.send_full_state_setpoint(pos, vel, acc, orientation, rollrate, pitchrate, yawrate)
+        time.sleep(0.2)
+
+
+def run_sequence(scf):
     cf = scf.cf
 
-    for position in sequence:
-        print('Setting position {}'.format(position))
-        for i in range(50):
-            cf.commander.send_position_setpoint(position[0],
-                                                position[1],
-                                                position[2],
-                                                position[3])
-            time.sleep(0.1)
+    # Set to mellinger controller
+    # cf.param.set_value('stabilizer.controller', '2')
+
+    print('takeoff')
+    send_setpoint(cf, 4.0,
+                  [0.0, 0.0, 1.0],
+                  [0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0],
+                  quaternion_from_euler(0.0, 0.0, 0.0),
+                  0.0, 0.0, 0.0)
+
+    send_setpoint(cf, 2.0,
+                  [0.0, 0.0, 1.0],
+                  [0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0],
+                  quaternion_from_euler(0.0, 0.0, 0.7),
+                  0.0, 0.0, 0.0)
+    print('land')
+    send_setpoint(cf, 2.0,
+                  [0.0, 0.0, 0.2],
+                  [0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0],
+                  quaternion_from_euler(0.0, 0.0, 0.0),
+                  0.0, 0.0, 0.0)
 
     cf.commander.send_stop_setpoint()
     # Hand control over to the high level commander to avoid timeout and locking of the Crazyflie
@@ -145,10 +165,33 @@ def run_sequence(scf, sequence):
     time.sleep(0.1)
 
 
+def _stab_log_data(timestamp, data, logconf):
+    print('roll: {}, pitch: {}, yaw: {}'.format(data['controller.roll'],
+                                                data['controller.pitch'],
+                                                data['controller.yaw']))
+    print('ctrltarget.x: {}, ctrltarget.y: {}, ctrltarget.z: {}'.format(data['ctrltarget.x'],
+                                                                        data['ctrltarget.y'],
+                                                                        data['ctrltarget.z']))
+
+
+def set_up_logging(scf):
+    _lg_stab = LogConfig(name='Stabilizer', period_in_ms=500)
+    _lg_stab.add_variable('controller.roll', 'float')
+    _lg_stab.add_variable('controller.pitch', 'float')
+    _lg_stab.add_variable('controller.yaw', 'float')
+    _lg_stab.add_variable('ctrltarget.x', 'float')
+    _lg_stab.add_variable('ctrltarget.y', 'float')
+    _lg_stab.add_variable('ctrltarget.z', 'float')
+
+    scf.cf.log.add_config(_lg_stab)
+    _lg_stab.data_received_cb.add_callback(_stab_log_data)
+    _lg_stab.start()
+
+
 if __name__ == '__main__':
     cflib.crtp.init_drivers()
 
     with SyncCrazyflie(uri, cf=Crazyflie(rw_cache='./cache')) as scf:
+        # set_up_logging(scf)
         reset_estimator(scf)
-        # start_position_printing(scf)
-        run_sequence(scf, sequence)
+        run_sequence(scf)
