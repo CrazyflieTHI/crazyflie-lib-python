@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
 # This file is part of the Augsburg Crazyflie Project.
-# (C) 2022 Hochschule Augsburg, University of Applied Sciences
+# (C) 2023 Hochschule Augsburg, University of Applied Sciences
 # -----------------------------------------------------------------------------
 #
 # Company:        University of Applied Sciences, Augsburg, Germany
 # Author:         Thomas Izycki <thomas.izycki2@hs-augsburg.de>
 #
 # Description:    Crazyflie CRTP link driver intended for the use with the
-#                 ROS Gazebo sim_cf simulation.
+#                 ROS Gazebo sim_cf/simcf2 simulation.
 #
 # --------------------- LICENSE -----------------------------------------------
 # This program is free software; you can redistribute it and/or
@@ -109,7 +109,7 @@ class SimDriver(CRTPDriver):
 
     def receive_packet(self, wait=0):
         """
-        Receive a packet though the link. This call is blocking but will
+        Receive a packet through the link. This call is blocking but will
         timeout and return None if a timeout is supplied.
         """
         if wait == 0:
@@ -184,14 +184,14 @@ class SimulationIpcPosix():
         # Inter-process communication (IPC) with POSIX message queues
         try:
             self.rxIpcQueue = posix_ipc.MessageQueue(rxQueueName, flags=posix_ipc.O_CREAT,
-                                                     max_messages=100, max_message_size=33)
+                                                     max_messages=10, max_message_size=33)
         except Exception as e:
             print(f"ERROR SimulationIpcPosix: {rxQueueName} creation failed. "+ str(e))
             return
 
         try:
             self.txIpcQueue = posix_ipc.MessageQueue(txQueueName, flags=posix_ipc.O_CREAT,
-                                                     max_messages=100, max_message_size=33)
+                                                     max_messages=10, max_message_size=33)
         except Exception as e:
             print(f"ERROR SimulationIpcPosix: {txQueueName} creation failed. "+ str(e))
             return
