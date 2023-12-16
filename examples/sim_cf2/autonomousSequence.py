@@ -29,6 +29,10 @@ one every 5 seconds.
 This example is intended to work with the Loco Positioning System in TWR TOA
 mode. It aims at documenting how to set the Crazyflie in position control mode
 and how to send setpoints.
+
+Modified by Thomas Izycki <thomas.izycki2@hs-augsburg.de>
+Set enable_sim_driver to true in order to run the example with the sim_cf2
+Crazyflie Flight Simulator
 """
 import time
 
