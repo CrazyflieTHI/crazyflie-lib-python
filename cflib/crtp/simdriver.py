@@ -7,8 +7,8 @@
 # Company:        University of Applied Sciences, Augsburg, Germany
 # Author:         Thomas Izycki <thomas.izycki2@hs-augsburg.de>
 #
-# Description:    Crazyflie CRTP link driver intended for the use with the
-#                 ROS Gazebo sim_cf/simcf2 simulation.
+# Description:    Crazyflie CRTP link driver intended for the use with
+#                 ROS2 Gazebo sim_cf2 simulation.
 #
 # --------------------- LICENSE -----------------------------------------------
 # This program is free software; you can redistribute it and/or
@@ -29,8 +29,8 @@
 """
 Crazyflie simulation CRTP link driver.
 
-This driver is used to communicate with an emulated Crazyflie in ROS Gazebo
-sim_cf software-in-the-loop simulation.
+This driver is used to communicate with an emulated Crazyflie in
+ROS2 Gazebo sim_cf2 software-in-the-loop simulation.
 """
 import logging
 import queue
