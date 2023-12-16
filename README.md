@@ -1,3 +1,7 @@
+# cflib with Crazyflie CRTP link driver
+
+This fork of the Crazyflie Python library includes the Crazyflie CRTP link driver (simlink) for the ROS2 Gazebo Crazyflie Flight Simulator *sim_cf2* https://github.com/CrazyflieTHI/sim_cf2
+
 # cflib: Crazyflie python library [![CI](https://github.com/bitcraze/crazyflie-lib-python/workflows/CI/badge.svg)](https://github.com/bitcraze/crazyflie-lib-python/actions)
 
 cflib is an API written in Python that is used to communicate with the Crazyflie
