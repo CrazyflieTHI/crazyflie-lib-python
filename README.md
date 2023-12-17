@@ -10,6 +10,15 @@ Download posix_ipc module for python
 pip install posix-ipc
 ```
 
+## Loading the Driver
+
+When initializing the CRTP drivers, set `enable_sim_driver` to `true`
+
+```python
+cflib.crtp.init_drivers(enable_sim_driver=True)
+```
+
+
 # cflib: Crazyflie python library [![CI](https://github.com/bitcraze/crazyflie-lib-python/workflows/CI/badge.svg)](https://github.com/bitcraze/crazyflie-lib-python/actions)
 
 cflib is an API written in Python that is used to communicate with the Crazyflie
