@@ -142,7 +142,10 @@ class SimDriver(CRTPDriver):
         if address is None:
             return []
         else:
-            return [[linkUris[address], '']]
+            if address in linkUris:
+                return [[linkUris[address], '']]
+            else:
+                return []
 
     def close(self):
         """Close the link"""
