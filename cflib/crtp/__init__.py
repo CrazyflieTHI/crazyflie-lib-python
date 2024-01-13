@@ -45,17 +45,21 @@ CLASSES = []
 
 
 def init_drivers(enable_debug_driver=False, enable_serial_driver=False, enable_cpp_driver=False, enable_sim_driver=False):
-    """Initialize all the drivers."""
+    """Initialize all the drivers.
+       With enabled sim driver, only the sim driver will be available.
+    """
 
     env = os.getenv('USE_CFLINK')
     if enable_cpp_driver:
         env = "cpp"
 
+    if enable_sim_driver:
+        CLASSES.append(SimDriver)
+        return
+
     if env is not None and env == 'cpp':
         from .cflinkcppdriver import CfLinkCppDriver
         CLASSES.append(CfLinkCppDriver)
-    elif enable_sim_driver:
-        CLASSES.append(SimDriver)
     else:
         CLASSES.extend([RadioDriver, UsbDriver])
 
@@ -65,7 +69,7 @@ def init_drivers(enable_debug_driver=False, enable_serial_driver=False, enable_c
     if enable_serial_driver:
         CLASSES.append(SerialDriver)
 
-    CLASSES.extend([UdpDriver, PrrtDriver, TcpDriver])
+    CLASSES.extend([UdpDriver, PrrtDriver, TcpDriver, SimDriver])
 
 
 def scan_interfaces(address=None):
@@ -105,6 +109,8 @@ def get_link_driver(uri, link_quality_callback=None, link_error_callback=None):
             instance.connect(uri, link_quality_callback, link_error_callback)
             return instance
         except WrongUriType:
+            continue
+        except:
             continue
 
     return None
