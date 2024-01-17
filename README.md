@@ -1,6 +1,6 @@
-# cflib with Crazyflie CRTP link driver
+# cflib with Crazyflie CRTP sim driver
 
-This fork of the Crazyflie Python library includes the Crazyflie CRTP link driver (simlink) for the ROS2 Gazebo Crazyflie Flight Simulator *sim_cf2* https://github.com/CrazyflieTHI/sim_cf2
+This fork of the Crazyflie Python library includes the Crazyflie CRTP link driver (sim driver) for the ROS2 Gazebo Crazyflie Flight Simulator *sim_cf2* https://github.com/CrazyflieTHI/sim_cf2
 
 ## Dependencies
 
@@ -12,10 +12,39 @@ pip install posix-ipc
 
 ## Loading the Driver
 
-When initializing the CRTP drivers, set `enable_sim_driver` to `true`
+The sim driver is always initialized when calling
+
+```python
+cflib.crtp.init_drivers()
+```
+
+If no radio dongle is attached to the computer, the sim driver will be loaded and an connection to a simulated Crazyflie can be established.
+
+## Forcing the Driver
+
+When initializing the CRTP drivers, set `enable_sim_driver` to `true` to exclusively load the sim driver.
 
 ```python
 cflib.crtp.init_drivers(enable_sim_driver=True)
+```
+
+## Scanning for Crazyflies
+
+Addresses and their corresponding `link_uri` are hard coded in the sim driver. Scanning for address *0xE7E7E7E701* will return the `link_uri` *'radio://0/80/2M/E7E7E7E701'*
+
+```python
+linkUris = {
+    0xE7E7E7E701:'radio://0/80/2M/E7E7E7E701',
+    0xE7E7E7E702:'radio://0/80/2M/E7E7E7E702',
+    0xE7E7E7E703:'radio://0/80/2M/E7E7E7E703',
+    0xE7E7E7E704:'radio://0/80/2M/E7E7E7E704',
+    0xE7E7E7E705:'radio://0/80/2M/E7E7E7E705',
+    0xE7E7E7E706:'radio://0/80/2M/E7E7E7E706',
+    0xE7E7E7E707:'radio://0/80/2M/E7E7E7E707',
+    0xE7E7E7E708:'radio://0/80/2M/E7E7E7E708',
+    0xE7E7E7E709:'radio://0/80/2M/E7E7E7E709',
+    0xE7E7E7E70A:'radio://0/80/2M/E7E7E7E70A'
+}
 ```
 
 
